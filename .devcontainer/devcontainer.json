@@ -1,0 +1,28 @@
+{
+  "name": "boot.dev-devops",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {},
+  "forwardPorts": [5432],
+  "postCreateCommand": [
+    "mkdir -p /home/vscode/.cache/go-build /home/vscode/go/pkg/mod",
+    "goose --version",
+    "sqlc version",
+    "go env -w GOCACHE=/home/vscode/.cache/go-build",
+    "go env -w GOMODCACHE=/home/vscode/go/pkg/mod"
+  ],
+  "remoteEnv": {
+    "DATABASE_URL": "postgres://db:5432/linko?sslmode=disable",
+    "GOCACHE": "/home/vscode/.cache/go-build",
+    "GOMODCACHE": "/home/vscode/go/pkg/mod"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "cweijan.vscode-postgresql-client2"
+      ]
+    }
+  }
+}
