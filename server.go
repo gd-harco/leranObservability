@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -54,7 +55,7 @@ func (s *server) start() error {
 }
 
 func (s *server) shutdown(ctx context.Context) error {
-	fmt.Print("Linko is shutting down\n")
+	log.Print("Linko is shutting down")
 	return s.httpServer.Shutdown(ctx)
 }
 
