@@ -33,6 +33,7 @@ func run(ctx context.Context, cancel context.CancelFunc, httpPort int, dataDir s
 	s := newServer(*st, httpPort, cancel)
 	var serverErr error
 	go func() {
+		fmt.Printf("Linko is running on http://localhost:%d\n", httpPort)
 		serverErr = s.start()
 	}()
 
