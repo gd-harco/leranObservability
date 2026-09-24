@@ -25,6 +25,9 @@ var (
 //go:embed index.html
 var indexPage string
 
+
+
+
 func (s *server) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, indexPage)
