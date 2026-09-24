@@ -16,8 +16,7 @@ type server struct {
 	httpServer *http.Server
 	store      store.Store
 	cancel     context.CancelFunc
-	accessLogger		*log.Logger
-	standardLogger		*log.Logger
+	logger		*log.Logger
 }
 
 func requestLogger(logger *log.Logger) func(http.Handler) http.Handler {
@@ -29,7 +28,7 @@ func requestLogger(logger *log.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func newServer(store store.Store, port int, cancel context.CancelFunc, accessLogger *log.Logger, standardLogger *log.Logger) *server {
+func newServer(store store.Store, port int, cancel context.CancelFunc, accessLogger *log.Logger) *server {
 	mux := http.NewServeMux()
 
 	srv := &http.Server{
@@ -41,8 +40,7 @@ func newServer(store store.Store, port int, cancel context.CancelFunc, accessLog
 		httpServer: srv,
 		store:      store,
 		cancel:     cancel,
-		accessLogger: accessLogger,
-		standardLogger: standardLogger,
+		logger: accessLogger,
 	}
 
 	mux.HandleFunc("GET /", s.handlerIndex)
@@ -68,7 +66,7 @@ func (s *server) start() error {
 }
 
 func (s *server) shutdown(ctx context.Context) error {
-	s.standardLogger.Print("Linko is shutting down")
+	s.logger.Print("Linko is shutting down")
 	return s.httpServer.Shutdown(ctx)
 }
 
