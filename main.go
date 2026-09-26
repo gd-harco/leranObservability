@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,7 +27,17 @@ func main() {
 
 func run(ctx context.Context, cancel context.CancelFunc, httpPort int, dataDir string) int {
 
-	appLogger := initializeLogger()
+	appLogger, cleanup, err := initializeLogger()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		return 1
+	}
+	defer func() {
+		if err := cleanup(); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to clean up logger: %v\n", err)
+		}
+	}()
+
 	st, err := store.New(dataDir, appLogger)
 	if err != nil {
 		appLogger.Printf("failed to create store: %v", err)

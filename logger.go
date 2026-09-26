@@ -1,27 +1,35 @@
 package main
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"os"
 )
 
-/*
-Add an initializeLogger helper. If LINKO_LOG_FILE is set, it should create a logger that writes to both the file and STDERR,
- otherwise, it should create one that only writes to STDERR.
-Use this logger for all logging in the application, removing the old loggers entirely.
-Remove both the DEBUG: and the INFO: prefixes from the logger.
-*/
+type closeFunc func() error
 
-func initializeLogger() *log.Logger{
+func initializeLogger()  (*log.Logger, closeFunc, error){
 	logFilePath, envSet := os.LookupEnv("LINKO_LOG_FILE")
 	if !envSet {
-		return log.New(os.Stderr, "", log.LstdFlags)
+		return log.New(os.Stderr, "", log.LstdFlags), func() error {return nil}, nil
 	}
 	logFile, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil{
-		log.Fatalf("failed to open log file: %v", err)
+		return nil, nil, err
 	}
-	multiWriter := io.MultiWriter(logFile, os.Stderr)
-	return log.New(multiWriter, "", log.LstdFlags)
+	bufferedFile := bufio.NewWriterSize(logFile, 8192)
+	multiWriter := io.MultiWriter(bufferedFile, os.Stderr)
+	cleanupFunc := func() error  {
+		err := bufferedFile.Flush()
+		if err != nil {
+			return err
+		}
+		err = logFile.Close()
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return log.New(multiWriter, "", log.LstdFlags), cleanupFunc, nil
 }
