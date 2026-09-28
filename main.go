@@ -12,7 +12,6 @@ import (
 	"boot.dev/linko/internal/store"
 )
 
-
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
@@ -40,13 +39,13 @@ func run(ctx context.Context, cancel context.CancelFunc, httpPort int, dataDir s
 
 	st, err := store.New(dataDir, appLogger)
 	if err != nil {
-		appLogger.Printf("failed to create store: %v", err)
+		appLogger.Info("failed to create store", "error", err)
 		return 1
 	}
-	s := newServer(*st, httpPort, cancel, appLogger )
+	s := newServer(*st, httpPort, cancel, appLogger)
 	var serverErr error
 	go func() {
-		appLogger.Printf("Linko is running on http://localhost:%d", httpPort)
+		appLogger.Info("Linko is running", "url", fmt.Sprintf("http://localhost:%d", httpPort))
 		serverErr = s.start()
 	}()
 
@@ -55,11 +54,11 @@ func run(ctx context.Context, cancel context.CancelFunc, httpPort int, dataDir s
 	defer cancel()
 
 	if err := s.shutdown(shutdownCtx); err != nil {
-		appLogger.Printf("failed to shutdown server: %v", err)
+		appLogger.Info("failed to shutdown server", "error", err)
 		return 1
 	}
 	if serverErr != nil {
-		appLogger.Printf("server error: %v", serverErr)
+		appLogger.Info("server error", "error", serverErr)
 		return 1
 	}
 	return 0
