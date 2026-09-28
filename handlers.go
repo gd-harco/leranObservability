@@ -16,6 +16,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+/*
+Run the Linko server with LINKO_LOG_FILE=linko.access.log set and log in using frodo / ofTheNineFingers.
+Create a short link for https://www.boot.dev/blog/golang. Notice that you get 3 new INFO logs for a single event!
+Remove the first two logs ("Shortening URL" and "Parsed URL"). Set the final success log's message to "Successfully generated short code".
+*/
+
 const shortURLLen = len("http://localhost:8080/") + 6
 
 var (
@@ -46,13 +52,11 @@ func (s *server) handlerShortenLink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing url parameter", http.StatusBadRequest)
 		return
 	}
-	s.logger.Info("Shortening URL", slog.String("url", longURL))
 	u, err := url.Parse(longURL)
 	if err != nil || u.Scheme == "" || u.Host == "" {
 		http.Error(w, "invalid URL: must include scheme (http/https) and host", http.StatusBadRequest)
 		return
 	}
-	s.logger.Info("Parsed URL", slog.String("scheme", u.Scheme), slog.String("host", u.Host))
 	if err := checkDestination(longURL); err != nil {
 		http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
 		return
@@ -62,7 +66,7 @@ func (s *server) handlerShortenLink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to shorten URL", http.StatusInternalServerError)
 		return
 	}
-	s.logger.Info("Generated short code", slog.String("shortCode", shortCode), slog.String("url", longURL))
+	s.logger.Info("Successfully generated short code", slog.String("shortCode", shortCode), slog.String("url", longURL))
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	io.WriteString(w, shortCode)
