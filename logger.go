@@ -8,7 +8,6 @@ import (
 
 type closeFunc func() error
 
-
 func initializeLogger() (*slog.Logger, closeFunc, error) {
 	logFilePath, envSet := os.LookupEnv("LINKO_LOG_FILE")
 	stderrHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
@@ -23,15 +22,10 @@ func initializeLogger() (*slog.Logger, closeFunc, error) {
 	}
 	bufferedFile := bufio.NewWriterSize(logFile, 8192)
 	cleanupFunc := func() error {
-		err := bufferedFile.Flush()
-		if err != nil {
+		if err := bufferedFile.Flush(); err != nil {
 			return err
 		}
-		err = logFile.Close()
-		if err != nil {
-			return err
-		}
-		return nil
+		return logFile.Close()
 	}
 	fileHandler := slog.NewTextHandler(bufferedFile, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
