@@ -27,7 +27,7 @@ func initializeLogger() (*slog.Logger, closeFunc, error) {
 		}
 		return logFile.Close()
 	}
-	fileHandler := slog.NewTextHandler(bufferedFile, &slog.HandlerOptions{
+	fileHandler := slog.NewJSONHandler(bufferedFile, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})
 	return slog.New(slog.NewMultiHandler(stderrHandler, fileHandler)), cleanupFunc, nil
