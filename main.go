@@ -39,13 +39,13 @@ func run(ctx context.Context, cancel context.CancelFunc, httpPort int, dataDir s
 
 	st, err := store.New(dataDir, appLogger)
 	if err != nil {
-		appLogger.Info("failed to create store", "error", err)
+		appLogger.Error(fmt.Sprintf("failed to create store: %v", err))
 		return 1
 	}
 	s := newServer(*st, httpPort, cancel, appLogger)
 	var serverErr error
 	go func() {
-		appLogger.Info("Linko is running", "url", fmt.Sprintf("http://localhost:%d", httpPort))
+		appLogger.Debug(fmt.Sprintf("Linko is running on http://localhost:%d", httpPort))
 		serverErr = s.start()
 	}()
 
@@ -54,11 +54,11 @@ func run(ctx context.Context, cancel context.CancelFunc, httpPort int, dataDir s
 	defer cancel()
 
 	if err := s.shutdown(shutdownCtx); err != nil {
-		appLogger.Info("failed to shutdown server", "error", err)
+		appLogger.Error(fmt.Sprintf("failed to shutdown server: %v", err))
 		return 1
 	}
 	if serverErr != nil {
-		appLogger.Info("server error", "error", serverErr)
+		appLogger.Error(fmt.Sprintf("server error: %v", serverErr))
 		return 1
 	}
 	return 0
