@@ -7,10 +7,12 @@
   "forwardPorts": [5432],
   "postCreateCommand": [
     "mkdir -p /home/vscode/.cache/go-build /home/vscode/go/pkg/mod"
+
   ],
   "remoteEnv": {
     "GOCACHE": "/home/vscode/.cache/go-build",
-    "GOMODCACHE": "/home/vscode/go/pkg/mod"
+    "GOMODCACHE": "/home/vscode/go/pkg/mod",
+    "GOPATH": "/home/vscode/go"
   },
   "customizations": {
     "vscode": {
