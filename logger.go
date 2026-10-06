@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 
+	"boot.dev/linko/internal/build"
 	"boot.dev/linko/internal/linkioerr"
 	pkgerr "github.com/pkg/errors"
 )
@@ -20,6 +21,11 @@ type multiError interface {
 	error
 	Unwrap() []error
 }
+
+var (
+	env         = os.Getenv("ENV")
+	hostname, _ = os.Hostname()
+)
 
 type closeFunc func() error
 
@@ -82,5 +88,11 @@ func initializeLogger() (*slog.Logger, closeFunc, error) {
 		Level:       slog.LevelInfo,
 		ReplaceAttr: replaceAttr,
 	})
-	return slog.New(slog.NewMultiHandler(stderrHandler, fileHandler)), cleanupFunc, nil
+	return slog.New(
+		slog.NewMultiHandler(stderrHandler, fileHandler)).With(
+		slog.String("git_sha", build.GitSHA),
+		slog.String("build_time", build.BuildTime),
+		slog.String("env", env),
+		slog.String("hostname", hostname),
+	), cleanupFunc, nil
 }
