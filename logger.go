@@ -13,6 +13,8 @@ import (
 
 	"boot.dev/linko/internal/build"
 	"boot.dev/linko/internal/linkioerr"
+	"github.com/lmittmann/tint"
+	"github.com/mattn/go-isatty"
 	pkgerr "github.com/pkg/errors"
 )
 
@@ -70,9 +72,14 @@ func replaceAttr(groups []string, a slog.Attr) slog.Attr {
 
 func initializeLogger() (*slog.Logger, closeFunc, error) {
 	logFilePath, envSet := os.LookupEnv("LINKO_LOG_FILE")
-	stderrHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+	isTty := false
+	if isatty.IsCygwinTerminal(os.Stderr.Fd()) || isatty.IsTerminal(os.Stderr.Fd()){
+		isTty = true
+	}
+	stderrHandler := tint.NewTextHandler(os.Stderr, &tint.Options{
 		Level:       slog.LevelDebug,
 		ReplaceAttr: replaceAttr,
+		NoColor: isTty,
 	})
 	if !envSet {
 		return slog.New(stderrHandler), func() error { return nil }, nil
