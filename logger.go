@@ -135,7 +135,7 @@ func (w *spyResponseWriter) WriteHeader(statusCode int) {
 const logContextKey contextKey = "log_context"
 
 type LogContext struct {
-	Error 	error
+	Error    error
 	Username string
 }
 
@@ -150,15 +150,16 @@ func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 			spyWriter := &spyResponseWriter{ResponseWriter: w}
 			w = spyWriter
 			next.ServeHTTP(w, r)
-			var contextAttr []slog.Attr
-			contextAttr = append(contextAttr, slog.String("method", r.Method),
+			contextAttr := []slog.Attr{
+				slog.String("request_id", w.Header().Get("X-Request-ID")),
+				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
 				slog.String("client_ip", r.RemoteAddr),
 				slog.Duration("duration", time.Since(startTime)),
 				slog.Int("request_body_bytes", spyReader.bytesRead),
 				slog.Int("response_status", spyWriter.statusCode),
 				slog.Int("response_body_bytes", spyWriter.bytesSent),
-			)
+			}
 			if contextStruc.Username != "" {
 				contextAttr = append(contextAttr, slog.String("user", contextStruc.Username))
 			}
@@ -170,7 +171,7 @@ func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func httpError(ctx context.Context, w http.ResponseWriter, err error,  status int){
+func httpError(ctx context.Context, w http.ResponseWriter, err error, status int) {
 	if logCtx, ok := ctx.Value(logContextKey).(*LogContext); ok {
 		logCtx.Error = err
 	}
