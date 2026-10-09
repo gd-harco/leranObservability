@@ -8,13 +8,15 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"time"
-	lumberjack "gopkg.in/natefinch/lumberjack.v2"
+
 	"boot.dev/linko/internal/build"
 	"boot.dev/linko/internal/linkioerr"
 	"github.com/lmittmann/tint"
 	"github.com/mattn/go-isatty"
 	pkgerr "github.com/pkg/errors"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 type stackTracer interface {
@@ -179,8 +181,15 @@ func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 }
 
 func httpError(ctx context.Context, w http.ResponseWriter, err error, status int) {
+	toRedactStatus := []int{
+		401,403,500,
+	}
 	if logCtx, ok := ctx.Value(logContextKey).(*LogContext); ok {
 		logCtx.Error = err
 	}
-	http.Error(w, err.Error(), status)
+	if slices.Contains(toRedactStatus, status){
+		http.Error(w, http.StatusText(status), status)
+		return
+	}
+		http.Error(w, err.Error(), status)
 }
