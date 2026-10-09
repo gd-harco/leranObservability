@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -10,7 +9,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 	"boot.dev/linko/internal/build"
 	"boot.dev/linko/internal/linkioerr"
 	"github.com/lmittmann/tint"
@@ -84,18 +83,19 @@ func initializeLogger() (*slog.Logger, closeFunc, error) {
 	if !envSet {
 		return slog.New(stderrHandler), func() error { return nil }, nil
 	}
-	logFile, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
-	if err != nil {
-		return nil, nil, err
+	logger := &lumberjack.Logger{
+		Filename:   logFilePath,
+		MaxSize:    1,
+		MaxAge:     28,
+		MaxBackups: 10,
+		LocalTime:  false,
+		Compress:   true,
 	}
-	bufferedFile := bufio.NewWriterSize(logFile, 8192)
+
 	cleanupFunc := func() error {
-		if err := bufferedFile.Flush(); err != nil {
-			return err
-		}
-		return logFile.Close()
+		return logger.Close()
 	}
-	fileHandler := slog.NewJSONHandler(bufferedFile, &slog.HandlerOptions{
+	fileHandler := slog.NewJSONHandler(logger, &slog.HandlerOptions{
 		Level:       slog.LevelInfo,
 		ReplaceAttr: replaceAttr,
 	})
