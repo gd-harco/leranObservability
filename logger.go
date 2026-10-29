@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"slices"
+	"strings"
 	"time"
 
 	"boot.dev/linko/internal/build"
@@ -52,7 +55,25 @@ func getAllAttr(err error) []slog.Attr {
 	return innerAttr
 }
 
+var sensitive = []string{"password", "key", "apikey", "secret", "pin", "creditcardno", "user"}
+
 func replaceAttr(groups []string, a slog.Attr) slog.Attr {
+	if slices.Contains(sensitive, a.Key) {
+		return slog.String(a.Key, "[REDACTED]")
+	}
+	if strings.Contains(a.Key, "url") {
+		url, err := url.Parse(a.Value.String())
+		if err != nil {
+			return a
+		}
+		if url.User == nil {
+			return a
+		}
+		if pass, exist := url.User.Password(); exist {
+			return slog.String(a.Key, strings.Replace(a.Value.String(), pass, "REDACTED", 1))
+		}
+		return a
+	}
 	if a.Key == "error" {
 		err, ok := a.Value.Any().(error)
 		if !ok {
@@ -74,13 +95,13 @@ func replaceAttr(groups []string, a slog.Attr) slog.Attr {
 func initializeLogger() (*slog.Logger, closeFunc, error) {
 	logFilePath, envSet := os.LookupEnv("LINKO_LOG_FILE")
 	isTty := false
-	if isatty.IsCygwinTerminal(os.Stderr.Fd()) || isatty.IsTerminal(os.Stderr.Fd()){
+	if isatty.IsCygwinTerminal(os.Stderr.Fd()) || isatty.IsTerminal(os.Stderr.Fd()) {
 		isTty = true
 	}
 	stderrHandler := tint.NewTextHandler(os.Stderr, &tint.Options{
 		Level:       slog.LevelDebug,
 		ReplaceAttr: replaceAttr,
-		NoColor: isTty,
+		NoColor:     isTty,
 	})
 	if !envSet {
 		return slog.New(stderrHandler), func() error { return nil }, nil
@@ -163,7 +184,8 @@ func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 				slog.String("request_id", w.Header().Get("X-Request-ID")),
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
-				slog.String("client_ip", r.RemoteAddr),
+				// slog.String("client_ip", r.RemoteAddr),
+				slog.String("client_ip", redactIP(r.RemoteAddr)),
 				slog.Duration("duration", time.Since(startTime)),
 				slog.Int("request_body_bytes", spyReader.bytesRead),
 				slog.Int("response_status", spyWriter.statusCode),
@@ -182,14 +204,37 @@ func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 
 func httpError(ctx context.Context, w http.ResponseWriter, err error, status int) {
 	toRedactStatus := []int{
-		401,403,500,
+		401, 403, 500,
 	}
 	if logCtx, ok := ctx.Value(logContextKey).(*LogContext); ok {
 		logCtx.Error = err
 	}
-	if slices.Contains(toRedactStatus, status){
+	if slices.Contains(toRedactStatus, status) {
 		http.Error(w, http.StatusText(status), status)
 		return
 	}
-		http.Error(w, err.Error(), status)
+	http.Error(w, err.Error(), status)
+}
+
+func redactIP(ip string) string {
+	var host string
+	var err error
+	if strings.Contains(ip, ":") {
+		host, _, err = net.SplitHostPort(ip)
+		if err != nil {
+			return ip
+		}
+	} else {
+		host = ip
+	}
+
+	parsed := net.ParseIP(host)
+	if parsed == nil {
+		return ip
+	}
+	if parsed = parsed.To4(); parsed == nil {
+		return ip
+	}
+	result := fmt.Sprintf("%v.%v.%v.%v", parsed[0], parsed[1], parsed[2], "x")
+	return result
 }
