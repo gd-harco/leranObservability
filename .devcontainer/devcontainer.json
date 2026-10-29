@@ -3,12 +3,21 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "features": {},
-  "forwardPorts": [5432],
-  "postCreateCommand": [
-    "mkdir -p /home/vscode/.cache/go-build /home/vscode/go/pkg/mod"
-
-  ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
+  },
+  "forwardPorts": [9090, 9100],
+  "portsAttributes": {
+    "9090": { "label": "Prometheus", "onAutoForward": "notify" },
+    "9100": { "label": "Node Exporter", "onAutoForward": "notify" }
+  },
+  "otherPortsAttributes": {
+    "onAutoForward": "notify"
+  },
+  "postCreateCommand":
+    "docker compose -f .devcontainer/compose.observability.yml up -d && mkdir -p /home/vscode/.cache/go-build /home/vscode/go/pkg/mod",
   "remoteEnv": {
     "GOCACHE": "/home/vscode/.cache/go-build",
     "GOMODCACHE": "/home/vscode/go/pkg/mod",
@@ -17,7 +26,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "golang.go"
+        "golang.go",
+        "ms-azuretools.vscode-docker"
       ]
     }
   }
