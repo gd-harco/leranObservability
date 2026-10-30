@@ -1,0 +1,21 @@
+File: linko
+Build ID: ecd4420dc504f1198e00d410b88fdfa0ac13bd19
+Type: cpu
+Time: 2026-10-30 17:05:51 UTC
+Duration: 30s, Total samples = 13720ms (45.73%)
+Showing nodes accounting for 13470ms, 98.18% of 13720ms total
+Dropped 142 nodes (cum <= 68.60ms)
+      flat  flat%   sum%        cum   cum%
+   13200ms 96.21% 96.21%    13220ms 96.36%  golang.org/x/crypto/blowfish.encryptBlock
+     270ms  1.97% 98.18%    13480ms 98.25%  golang.org/x/crypto/blowfish.ExpandKey
+         0     0% 98.18%    13500ms 98.40%  golang.org/x/crypto/bcrypt.GenerateFromPassword
+         0     0% 98.18%    13490ms 98.32%  golang.org/x/crypto/bcrypt.bcrypt
+         0     0% 98.18%    13480ms 98.25%  golang.org/x/crypto/bcrypt.expensiveBlowfishSetup
+         0     0% 98.18%    13490ms 98.32%  golang.org/x/crypto/bcrypt.newFromPassword
+         0     0% 98.18%    13520ms 98.54%  main.(*server).handlerRedirect
+         0     0% 98.18%    13600ms 99.13%  main.requestIdMiddleware.func1
+         0     0% 98.18%    13590ms 99.05%  main.requestObserver.func1.func1
+         0     0% 98.18%    13560ms 98.83%  net/http.(*ServeMux).ServeHTTP
+         0     0% 98.18%    13660ms 99.56%  net/http.(*conn).serve
+         0     0% 98.18%    13600ms 99.13%  net/http.HandlerFunc.ServeHTTP
+         0     0% 98.18%    13600ms 99.13%  net/http.serverHandler.ServeHTTP
